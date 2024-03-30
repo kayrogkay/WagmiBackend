@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const { CovalentClient } = require("@covalenthq/client-sdk");
+const axios = require('axios');
 
 // Import Moralis
 const Moralis = require("moralis").default;
@@ -44,6 +45,7 @@ app.use(express.json());
 
 const moralisApiKey = process.env.MORALIS_API;
 const covalentApiKey = process.env.COVALENT_API;
+const raribleApiKey = process.env.RARIBLE_APIKEY;
 
 const privateKey = process.env.privateKey;
 
@@ -246,21 +248,21 @@ const getCollectionAmount = async (address, _chain, nftAddress) => {
       var chain;
       switch (_chain) {
         case "Eth Sepolia":
-          chain = "eth-sepolia";
+          chain = "ETHEREUM";
           break;
       case "Polygon Mumbai":
-          chain = "matic-mumbai";
+          chain = "POLYGON";
           break;
-      case "BSC Testnet":
-          chain = "bsc-testnet";
+      case "Base Sepolia":
+          chain = "BASE";
           break;
       default:
-          chain = "base-sepolia-testnet";
+          chain = "RARI";
       }
       
       const result = NftSumCheck(chain, address);
 
-      const amount = AmountByAddress(result, nftAddress);
+      const amount = AmountByAddress(result, nftAddress, chain);
       console.log(amount);
       return amount;
     
@@ -285,11 +287,11 @@ const sumAmountByAddress = (data, address) => {
   return sum;
 }
 
-const AmountByAddress = (data, address) => {
+const AmountByAddress = (data, address, chain) => {
   // Filter the array to include only objects with the specified 'name'
   console.log('data', data);
   const add = Number(address);
-  const filteredData = data.filter((item) => item.contract_address == add);
+  const filteredData = data.filter((item) => item.contract == `${chain}:${add}`);
   console.log('address', add);
   console.log('filtered data', filteredData);
 
@@ -1102,17 +1104,19 @@ const getTransactionAmount = async (address, _chain, contractAddress) => {
 
 const NftSumCheck = async(chain, address) => {
   try {
-    const client = new CovalentClient(covalentApiKey);
-    const queryParamOpts = {
-      withUncached: true,
+    const options = {
+      method: 'GET',
+      url: `https://testnet-api.rarible.org/v0.1/items/byOwner?blockchains=${chain}&owner=${chain}%3A${address}`,
+      headers: {
+        accept: 'application/json',
+        'X-API-KEY': raribleApiKey
+      }
     };
-    const request = await client.NftService.getNftsForAddress(chain, address, queryParamOpts);
-    if (!request.error) {
-        console.log(request.data.items);
-        return request.data.items;
-    } else {
-        console.log(request.error_message);
-    }
+  
+    const response = await axios(options);
+    const items = response.data.items;
+
+    return items;
   } catch (error) {
     console.log(error);
   }
