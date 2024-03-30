@@ -260,7 +260,7 @@ const getCollectionAmount = async (address, _chain, nftAddress) => {
           chain = "RARI";
       }
       
-      const result = NftSumCheck(chain, address);
+      const result = await NftSumCheck(chain, address);
 
       const amount = AmountByAddress(result, nftAddress, chain);
       console.log(amount);
@@ -290,8 +290,12 @@ const sumAmountByAddress = (data, address) => {
 const AmountByAddress = (data, address, chain) => {
   // Filter the array to include only objects with the specified 'name'
   console.log('data', data);
-  const add = Number(address);
-  const filteredData = data.filter((item) => item.contract == `${chain}:${add}`);
+  var filteredData = [];
+  for (let i = 0; i < data.length; i++) {
+      if (data[i].item.contract.includes(address) && data[i].item.contract.includes(chain)) {
+        filteredData.push(data[i]);
+      }
+  }
   console.log('address', add);
   console.log('filtered data', filteredData);
 
@@ -1102,11 +1106,11 @@ const getTransactionAmount = async (address, _chain, contractAddress) => {
 
 }
 
-const NftSumCheck = async(chain, address) => {
+const NftSumCheck = async(address) => {
   try {
     const options = {
       method: 'GET',
-      url: `https://testnet-api.rarible.org/v0.1/items/byOwner?blockchains=${chain}&owner=${chain}%3A${address}`,
+      url: `https://testnet-api.rarible.org/v0.1/items/byOwnerWithOwnership?owner=ETHEREUM%3A${address}`,
       headers: {
         accept: 'application/json',
         'X-API-KEY': raribleApiKey
