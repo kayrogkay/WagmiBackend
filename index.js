@@ -856,20 +856,20 @@ const getParticipants = async(id, address) => {
   if (questersSnapshot.empty) {
     isParticipant = false;
     return { participants, isParticipant };
+  } else {
+    questersSnapshot.forEach(async (doc) => {
+      const _participant = await getImage(doc.data().address);
+      if (doc.data().address == address) {
+        isParticipant = true;
+      } else {
+        isParticipant = false;
+      }
+      const participant = _participant.toString();
+      participants.push(participant);
+    });
+  
+    return { participants, isParticipant };
   }
-
-  questersSnapshot.forEach(async (doc) => {
-    const _participant = await getImage(doc.data().address);
-    if (doc.data().address == address) {
-      isParticipant = true;
-    } else {
-      isParticipant = false;
-    }
-    const participant = _participant.toString();
-    participants.push(participant);
-  });
-
-  return { participants, isParticipant };
   
   } catch (error) {
     console.log(error);
